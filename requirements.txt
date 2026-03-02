@@ -1,0 +1,10 @@
+
+panel
+hvplot
+pandas
+numpy
+geopandas
+shapely
+SQLAlchemy
+psycopg2-binary
+geoviews
