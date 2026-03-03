@@ -7,8 +7,11 @@ import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Polygon
 from sqlalchemy import create_engine
+import holoviews as hv
 
-pn.extension("leaflet")
+hv.extension("bokeh")
+pn.extension()
+
 
 # ----------------------------
 # Grid resolution
@@ -93,7 +96,7 @@ ORDER BY ct.seconds_parked DESC;
 DBURL = "postgresql+psycopg2://erling:Gnilre_22@www.accretiosolutions.com:5432/linuxdatabase"
 
 # Optional noise filter threshold (hours)
-MIN_HOURS = 0.5
+MIN_HOURS = 0.3
 
 # ----------------------------
 # Data load + transform helpers
@@ -122,6 +125,8 @@ def cell_polygon(row):
         (x, y),
     ])
 
+
+
 def build_plot(df: pd.DataFrame):
     gdf = gpd.GeoDataFrame(
         df,
@@ -129,41 +134,78 @@ def build_plot(df: pd.DataFrame):
         crs="EPSG:4326",
     )
 
+    h = pd.to_numeric(df["hours_parked"], errors="coerce")
+    hmin, hmax = float(h.min()), float(h.max())
+    if not np.isfinite(hmin) or not np.isfinite(hmax) or hmin == hmax:
+        hmin = 0.0 if not np.isfinite(hmin) else hmin
+        hmax = hmin + 1.0
+    clim = (hmin, hmax)
+
     squares = gdf.hvplot.polygons(
         geo=True,
         tiles="OSM",
         c="hours_parked",
         cmap="viridis",
+        clim=clim,
         alpha=0.55,
         line_color="black",
         line_width=0.6,
         hover_cols=["hours_parked", "days_parked"],
-        frame_height=700,
-        frame_width=1000,
+        width=1150,
+        height=720,
         title="Parking grid (100×100 m cells, colored by hours parked)",
+        colorbar=True,
+        backend_opts={
+            # Reserve space on the right so the colorbar is not clipped
+            "plot.min_border_right": 140,
+            # And a bit on left/bottom for labels/ticks so nothing is cut off
+            "plot.min_border_left": 70,
+            "plot.min_border_bottom": 60,
+        },
     )
 
     origin_lat = float(df["origin_lat_100m"].iloc[0])
     origin_lon = float(df["origin_lon_100m"].iloc[0])
-
     origin_df = pd.DataFrame({"lon": [origin_lon], "lat": [origin_lat]})
+
     origin = origin_df.hvplot.points(
-        x="lon",
-        y="lat",
+        x="lon", y="lat",
         geo=True,
-        tiles="OSM",
+        tiles=None,
         color="red",
         marker="x",
         size=350,
     )
 
-    return squares * origin
+    overlay = (squares * origin).opts(toolbar="above")
+
+    return overlay
 
 # ----------------------------
 # Panel app with refresh button
 # ----------------------------
 status = pn.pane.Alert("", alert_type="info", visible=False)
-plot_pane = pn.pane.HoloViews(sizing_mode="stretch_width")
+
+
+#plot_pane = pn.pane.HoloViews(
+#    backend="bokeh",
+#    sizing_mode="fixed",
+#    width=1250,
+#    height=780,
+#    styles={"overflow": "visible"},
+#)
+
+
+plot_pane = pn.pane.HoloViews(
+    backend="bokeh",
+    sizing_mode="fixed",
+    width=1250,
+    height=780,
+)
+
+
+
+
 refresh = pn.widgets.Button(name="Refresh data", button_type="primary")
 min_hours = pn.widgets.FloatInput(name="Min parked hours", value=MIN_HOURS, step=0.25)
 
