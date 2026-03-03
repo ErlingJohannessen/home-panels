@@ -5,7 +5,11 @@ SERVICE_FILE_PATH="/etc/systemd/system/$SERVICE_NAME"
 user="ubuntu" # Default user; can be overridden by parameter
 working_directory="/home/ubuntu/home-panels"
 python_path="/home/ubuntu/home-panels/.venv/bin/python"
-app_path="/home/ubuntu/home-panels/src/vehiclemap.py"
+
+app_paths="/home/ubuntu/home-panels/src/home.py \
+/home/ubuntu/home-panels/src/vehiclemap.py \
+/home/ubuntu/home-panels/src/imageviewer.py"
+
 log_file="/var/log/panels.log"
 
 deploy_service() {
@@ -22,13 +26,16 @@ User=$user
 WorkingDirectory=$working_directory
 
 # Run Panel server with the same settings as startup.sh
-ExecStart=$python_path -m panel serve $app_path \\
-  --address 0.0.0.0 \\
-  --port 5010 \\
-  --log-level info \\
-  --root-path /restricted/panels \\
-  --allow-websocket-origin accretiosolutions.com \\
+
+ExecStart=$python_path -m panel serve $app_paths \
+  --address 0.0.0.0 \
+  --port 5010 \
+  --log-level info \
+  --root-path /restricted/panels \
+  --index=home \
+  --allow-websocket-origin accretiosolutions.com \
   --allow-websocket-origin www.accretiosolutions.com
+
 
 Restart=always
 StandardOutput=append:$log_file

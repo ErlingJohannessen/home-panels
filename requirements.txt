@@ -8,3 +8,4 @@ shapely
 SQLAlchemy
 psycopg2-binary
 geoviews
+astral
