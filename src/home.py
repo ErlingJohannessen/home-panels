@@ -13,7 +13,7 @@ Select one of the applications below:
 apps = [
     ("🚗 Vehicle Map", "./vehiclemap"),
     ("🖼️ Image Viewer", "./imageviewer"),
-    #("📊 Charts", "./charts"),
+    ("📊 Charts", "./charts"),
 ]
 
 def app_card(title, link):

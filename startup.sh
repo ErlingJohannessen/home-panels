@@ -1,4 +1,4 @@
-python -m panel serve home.py vehiclemap.py imageviewer.py  \
+python -m panel serve home.py vehiclemap.py imageviewer.py charts.py \
   --address 0.0.0.0 \
   --port 5010 \
   --log-level info \
